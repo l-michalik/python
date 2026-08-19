@@ -1,17 +1,106 @@
 [project]
-name = "python"
+name = "joboffers"
 version = "0.1.0"
-description = "Add your description here"
+description = "Agregator ogloszen o prace - projekt cwiczeniowy do skilla python"
 readme = "README.md"
 authors = [
-    { name = "Łukasz Michalik", email = "l.michalik@mdbootstrap.com" }
+    { name = "Łukasz Michalik", email = "l.michalik004@gmail.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "fastapi>=0.141,<0.142",
+    "uvicorn[standard]>=0.34",
+    "pydantic>=2.9,<3.0",
+    "pydantic-settings>=2.5",
+    "sqlalchemy>=2.0,<3.0",
+    "alembic>=1.14",
+    "psycopg[binary]>=3.2",
+    "httpx>=0.28",
+]
 
 [project.scripts]
-python = "python:main"
+joboffers = "joboffers.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1",
+    "pytest-asyncio>=0.25",
+    "pytest-cov>=6.0",
+    "mypy>=2.3",
+    "ruff>=0.16",
+    "hypothesis>=6.120",
+    "mutmut>=3.2",
+    "respx>=0.22",
+]
 
 [build-system]
 requires = ["uv_build>=0.12.3,<0.13.0"]
 build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "joboffers"
+module-root = "src"
+
+# --- ruff -------------------------------------------------------------------
+# pyt-jun-001: linter i formater konfigurowane w tym samym pliku co zaleznosci.
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "ANN", "LOG", "G", "T20", "RET", "C4"]
+ignore = ["ANN401"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["ANN"]
+"src/joboffers/bench/*" = ["T20"]
+"src/joboffers/cli.py" = ["T20"]
+
+# --- mypy -------------------------------------------------------------------
+# pyt-reg-006: surowosc wlacza sie MODULAMI, nie globalnym przelacznikiem.
+# Domyslnie luzno; sekcje ponizej zaostrzasz w miare postepu zadan T07/T08.
+[tool.mypy]
+python_version = "3.13"
+files = ["src", "tests"]
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+show_error_codes = true
+# Celowo NIE wlaczone globalnie - to jest przedmiotem zadania T08:
+# strict = true
+
+[[tool.mypy.overrides]]
+module = "joboffers.domain.*"
+strict = true
+
+# Przyklad domkniecia granicy z biblioteka bez informacji o typach.
+# [[tool.mypy.overrides]]
+# module = "jakas_biblioteka.*"
+# ignore_missing_imports = true
+
+# --- pytest -----------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+asyncio_mode = "auto"
+markers = [
+    "db: wymaga uruchomionego Postgresa (docker compose up -d)",
+    "slow: pomiar wydajnosci, nie uruchamiaj w petli TDD",
+    "bench: harness pomiarowy, wynik zapisywany do docs/pomiary/",
+]
+
+# --- coverage ---------------------------------------------------------------
+# pyt-reg-005: branch = true, bo pokrycie linii mierzy wykonanie, nie sprawdzenie.
+[tool.coverage.run]
+branch = true
+source = ["src/joboffers"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+]

@@ -1,0 +1,21 @@
+# Postgres do zadan T04, T13, T14, T15.
+# Uruchomienie: docker compose up -d
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_USER: joboffers
+      POSTGRES_PASSWORD: joboffers
+      POSTGRES_DB: joboffers
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U joboffers"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
